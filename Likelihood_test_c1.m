@@ -6,11 +6,16 @@
 
 %% setting parameters
 
-rng(0); %setting the random seed, so that the draws will have the same result each time, for now this is useful.
+% rng(0); %setting the random seed, so that the draws will have the same result each time, for now this is useful.
 
 k=1.0; %setting the multiplication for the linear functions
-t_max=1; %setting the amount of time steps for the source activity
+t_max=3; %setting the amount of time steps for the source activity
 n=5; %setting the amount of possible locations
+
+P_C=0.5;% setting the probability of selecting C=1 or C=2
+P_av_given_LMf=zeros(n,n,n,t_max+1); %make an array to store the probabilities in, this is an n (range of L) by n (range of M) by n (range of c or f) by t array (so that the different times can be stored as well, but designed s.t. the first entry contains the first prior)
+repeat_l=5;
+repeat_m=5;
 
 lrange=[-5 5];
 mrange=[-5 5];
@@ -36,71 +41,41 @@ sig_mv=0.5; %setting the noise parameters for the subject's observation
 %% Now  going over the entire space state to find estimates of the probabilities for the parameters in the generated a_x and v_x
 %note that it is here useful to also count the instances that are the same
 %as the values in the a_x and v_x
-frac_la=zeros(n,n,n);
-frac_ma=zeros(n,n,n);
-frac_lv=zeros(n,n,n);
-frac_mv=zeros(n,n,n);
-%looping over the l and then m space, as these depend on the location, do
-%not need to loop over c (or f), as this is location independent so can be
-%obtained once and then get the probabilities for specific values.
-li=1;
-for lr=l
-    mi=1;
-    for mr=m
-        repeat=10000;
-        L=lr;
-        M=mr;
-        
-        f_v_s_store=zeros(repeat,t_max);
-        f_a_s_store=zeros(repeat,t_max);
-        
-        i_la_store=zeros(repeat,t_max);
-        i_ma_store=zeros(repeat,t_max);
-        i_lv_store=zeros(repeat,t_max);
-        i_mv_store=zeros(repeat,t_max);
-        for q=1:repeat
-            %C=1, run model and plot
-            [f_a_s_plt_stat,f_v_s_plt_stat,i_l_plt_stat,i_m_plt_stat,i_la_plt_stat,i_ma_plt_stat,i_lv_plt_stat,i_mv_plt_stat]=Likelihood_given_input_c1(k,t_max,n,c,l,m,L,M,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
-        %     [f_a_s_plt,f_v_s_plt,i_l_plt,i_m_plt,i_la_plt,i_ma_plt,i_lv_plt,i_mv_plt]=Likelihood(k,t_max,n,c,l,m,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
-            i_la_store(q,:)=i_la_plt_stat;
-            i_ma_store(q,:)=i_ma_plt_stat;
-            i_lv_store(q,:)=i_lv_plt_stat;
-            i_mv_store(q,:)=i_mv_plt_stat;
-            f_v_s_store(q,:)=f_v_s_plt_stat;
-            f_a_s_store(q,:)=f_a_s_plt_stat;
+for t=1:t_max
+    store_a=zeros(n,n,n);
+    store_v=zeros(n,n,n);
+    %Drawing random numbers from the distributions for L and M, thus in
+    %principle taking the probability distributions of these variables into
+    %account. This will then be used as the locations for the input variables
+    %in the Likelihood_given_input_c1 formula, and thus will be used to
+    %generate samples. The amount of times a sample will hit a specific
+    %location will then be the fraction of times a specific value is expected,
+    %and can then be used as a pseudo-probability (i.e. non-normalised prob.).
+    %Not need to loop over c (or f), as this is location independent so can be
+    %obtained once and then get the probabilities for specific values.
+    % li=1;
+    for li=1:repeat_l
+    %     mi=1;
+        L=normrnd(0,sig_l_s);
+        for mi=1:repeat_m
+            repeat=10000;
+            M=normrnd(0,sig_m_s); %drawing the M and L from the probability distributions for these parameters, this should simulate the effect of multiplication with the P(L_{av}^{s}) etc.
+            
+            f_v_s_store=zeros(repeat,t_max);
+            f_a_s_store=zeros(repeat,t_max);
+            for q=1:repeat
+                %C=1, run model and plot
+                [i_fax,i_fvx,i_l_plt_stat,i_m_plt_stat,i_la_plt_stat,i_ma_plt_stat,i_lv_plt_stat,i_mv_plt_stat]=Likelihood_given_input_c1(k,t_max,n,c,l,m,L,M,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
+            %     [f_a_s_plt,f_v_s_plt,i_l_plt,i_m_plt,i_la_plt,i_ma_plt,i_lv_plt,i_mv_plt]=Likelihood(k,t_max,n,c,l,m,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
+                store_a(i_la_plt_stat,i_ma_plt_stat,i_fax)=store_a(i_la_plt_stat,i_ma_plt_stat,i_fax)+1;
+                store_v(i_lv_plt_stat,i_mv_plt_stat,i_fvx)=store_v(i_lv_plt_stat,i_mv_plt_stat,i_fvx)+1;
+            end
+            %the storage containers above will contain the distribution of the
+            %visual and auditory probabilities, multiplied with the probability
+            %for L_{av}^{s} etc. (i.e. the integration terms).
+            mi=mi+1;
         end
-        [C_la,R_la] = groupcounts(i_la_store(:,1)); 
-        [~,d_la]=dsearchn(R_la,l');
-        i_la=find(d_la==min(d_la(:))); 
-        frac_la(li,mi,i_la)=C_la;
-        
-        [C_ma,R_ma] = groupcounts(i_ma_store(:,1)); 
-        [~,d_ma]=dsearchn(R_ma,m');
-        i_ma=find(d_ma==min(d_ma(:))); 
-        frac_ma(li,mi,i_ma)=C_ma;
-
-        [C_lv,R_lv] = groupcounts(i_lv_store(:,1)); 
-        [~,d_lv]=dsearchn(R_lv,l');
-        i_lv=find(d_lv==min(d_lv(:))); 
-        frac_lv(li,mi,i_lv)=C_lv;
-
-        [C_mv,R_mv] = groupcounts(i_mv_store(:,1)); 
-        [~,d_mv]=dsearchn(R_mv,m');
-        i_mv=find(d_mv==min(d_mv(:))); 
-        frac_mv(li,mi,i_mv)=C_mv;
-        %so the above grid means: when we put the actual stimulus at
-        %locations given by the l(li), m(mi) then we get a distribution for
-        %the auditory/visual stimulus (after taking noise into account)
-        %which has a similar distribution as the (li,mi,:) parameter
-        %belonging to that stimulus (so for la it would be the location
-        %distribution for a specific match of l(li) and m(mi))
-
-        mi=mi+1;
+        li=li+1;
     end
-    li=li+1;
+    P_av_given_LMf(t+1)=P_av_given_LMf(t)+(P_C*((store_a+store_v)./(sum(sum(sum(store_a)))+sum(sum(sum(store_v)))))); %normalised result of the integral, need to be multiplied with P(C) and the posterior of the previous time_step
 end
-
-%% now that we have obtained what fractions of the totcal amount will fall where, when the L^s and M^s are moved about, we can count the probability for a specific a^x and v^x
-
-%make the a_x and v_x parameters that will be used in the estimation
-[f_a_s_plt,f_v_s_plt,i_l_plt,i_m_plt,i_la_plt,i_ma_plt,i_lv_plt,i_mv_plt]=Likelihood(k,t_max,n,c,l,m,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
