@@ -10,12 +10,12 @@
 
 k=1.0; %setting the multiplication for the linear functions
 t_max=3; %setting the amount of time steps for the source activity
-n=5; %setting the amount of possible locations
+n=20; %setting the amount of possible locations
 
 P_C=0.5;% setting the probability of selecting C=1 or C=2
 P_av_given_LMf=zeros(n,n,n,t_max+1); %make an array to store the probabilities in, this is an n (range of L) by n (range of M) by n (range of c or f) by t array (so that the different times can be stored as well, but designed s.t. the first entry contains the first prior)
-repeat_l=5;
-repeat_m=5;
+repeat_l=10;
+repeat_m=10;
 
 lrange=[-5 5];
 mrange=[-5 5];
@@ -65,8 +65,8 @@ for t=1:t_max
             f_a_s_store=zeros(repeat,t_max);
             for q=1:repeat
                 %C=1, run model and plot
-                [i_fax,i_fvx,i_l_plt_stat,i_m_plt_stat,i_la_plt_stat,i_ma_plt_stat,i_lv_plt_stat,i_mv_plt_stat]=Likelihood_given_input_c1(k,t_max,n,c,l,m,L,M,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
-            %     [f_a_s_plt,f_v_s_plt,i_l_plt,i_m_plt,i_la_plt,i_ma_plt,i_lv_plt,i_mv_plt]=Likelihood(k,t_max,n,c,l,m,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
+                [i_fax,i_fvx,i_l_plt_stat,i_m_plt_stat,i_la_plt_stat,i_ma_plt_stat,i_lv_plt_stat,i_mv_plt_stat]=Likelihood_given_input(k,t_max,n,c,l,m,L,M,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
+%                 [i_fax,i_fvx,i_las_plt,i_mas_plt,i_lvs_plt,i_mvs_plt,i_la_plt,i_ma_plt,i_lv_plt,i_mv_plt]=Likelihood_given_input(k,t_max,n,c,l,m,L,M,sig_e_as,sig_e_vs,sig_l_as,sig_l_vs,sig_m_as,sig_m_vs,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv,L_v,M_v);
                 store_a(i_la_plt_stat,i_ma_plt_stat,i_fax)=store_a(i_la_plt_stat,i_ma_plt_stat,i_fax)+1;
                 store_v(i_lv_plt_stat,i_mv_plt_stat,i_fvx)=store_v(i_lv_plt_stat,i_mv_plt_stat,i_fvx)+1;
             end
@@ -77,5 +77,6 @@ for t=1:t_max
         end
         li=li+1;
     end
-    P_av_given_LMf(t+1)=P_av_given_LMf(t)+(P_C*((store_a+store_v)./(sum(sum(sum(store_a)))+sum(sum(sum(store_v)))))); %normalised result of the integral, need to be multiplied with P(C) and the posterior of the previous time_step
+    P_av_given_LMf(:,:,:,t+1)=P_av_given_LMf(:,:,:,t)+(P_C*((store_a+store_v)./(sum(sum(sum(store_a)))+sum(sum(sum(store_v)))))); %normalised result of the integral, need to be multiplied with P(C) and the posterior of the previous time_step
+    P_av_given_LMf(:,:,:,t+1)=P_av_given_LMf(:,:,:,t+1)/(sum(sum(sum(P_av_given_LMf(:,:,:,t+1))))); %normalising
 end

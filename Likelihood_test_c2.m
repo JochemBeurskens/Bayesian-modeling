@@ -9,12 +9,17 @@
 rng(0); %setting the random seed, so that the draws will have the same result each time, for now this is useful.
 
 k=1.0; %setting the multiplication for the linear functions
-t_max=1; %setting the amount of time steps for the source activity
+t_max=3; %setting the amount of time steps for the source activity
 n=5; %setting the amount of possible locations
 
-lrange=[-1 1];
-mrange=[-1 1];
-crange=[-1 1];
+P_C=0.5;% setting the probability of selecting C=1 or C=2
+P_av_given_LMf=zeros(n,n,n,t_max+1); %make an array to store the probabilities in, this is an n (range of L) by n (range of M) by n (range of c or f) by t array (so that the different times can be stored as well, but designed s.t. the first entry contains the first prior)
+repeat_l=5;
+repeat_m=5;
+
+lrange=[-5 5];
+mrange=[-5 5];
+crange=[-5 5];
 
 sig_e_s=0.1;
 sig_l_s=0.6;
@@ -48,32 +53,43 @@ repeat=10000;
 L=3;
 M=2;
 c_given=1;
-[f_a_s_plt_stat,f_v_s_plt_stat,i_l_plt_stat,i_m_plt_stat,i_la_plt_stat,i_ma_plt_stat,i_lv_plt_stat,i_mv_plt_stat]=Likelihood_given_input_c1(k,t_max,n,c,l,m,L,M,c_given,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
-
-f_v_sc2_store=zeros(repeat,t_max);
-f_a_sc2_store=zeros(repeat,t_max);
-
-i_lac2_store=zeros(repeat,t_max);
-i_mac2_store=zeros(repeat,t_max);
-i_lvc2_store=zeros(repeat,t_max);
-i_mvc2_store=zeros(repeat,t_max);
-for q=1:repeat
-    %C=2, run model and plot
-    [f_a_s_plt,f_v_s_plt,i_las_plt,i_mas_plt,i_lvs_plt,i_mvs_plt,i_la_plt,i_ma_plt,i_lv_plt,i_mv_plt]=Likelihood(k,t_max,n,c,l,m,sig_e_as,sig_e_vs,sig_l_as,sig_l_vs,sig_m_as,sig_m_vs,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
-    i_lac2_store(q,:)=i_la_plt;
-    i_mac2_store(q,:)=i_ma_plt;
-    i_lvc2_store(q,:)=i_lv_plt;
-    i_mvc2_store(q,:)=i_mv_plt;
-    f_v_sc2_store(q,:)=f_v_s_plt;
-    f_a_sc2_store(q,:)=f_a_s_plt;
+for t=1:t_max
+    store_a=zeros(n,n,n);
+    store_v=zeros(n,n,n);
+    %Drawing random numbers from the distributions for L and M, thus in
+    %principle taking the probability distributions of these variables into
+    %account. This will then be used as the locations for the input variables
+    %in the Likelihood_given_input_c1 formula, and thus will be used to
+    %generate samples. The amount of times a sample will hit a specific
+    %location will then be the fraction of times a specific value is expected,
+    %and can then be used as a pseudo-probability (i.e. non-normalised prob.).
+    %Not need to loop over c (or f), as this is location independent so can be
+    %obtained once and then get the probabilities for specific values.
+    % li=1;
+    for li=1:repeat_l
+    %     mi=1;
+        L=normrnd(-3,sig_l_as);
+        L_v=normrnd(2,sig_l_vs);
+        for mi=1:repeat_m
+            repeat=10000;
+            M=normrnd(-3,sig_m_as); %drawing the M and L from the probability distributions for these parameters, this should simulate the effect of multiplication with the P(L_{av}^{s}) etc.
+            M_v=normrnd(2,sig_m_vs);
+            f_v_s_store=zeros(repeat,t_max);
+            f_a_s_store=zeros(repeat,t_max);
+            for q=1:repeat
+                %C=1, run model and plot
+%                 [i_fax,i_fvx,i_l_plt_stat,i_m_plt_stat,i_la_plt_stat,i_ma_plt_stat,i_lv_plt_stat,i_mv_plt_stat]=Likelihood_given_input(k,t_max,n,c,l,m,L,M,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
+                [i_fax,i_fvx,i_las_plt,i_mas_plt,i_lvs_plt,i_mvs_plt,i_la_plt,i_ma_plt,i_lv_plt,i_mv_plt]=Likelihood_given_input(k,t_max,n,c,l,m,L,M,sig_e_as,sig_e_vs,sig_l_as,sig_l_vs,sig_m_as,sig_m_vs,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv,L_v,M_v);
+                store_a(i_la_plt,i_ma_plt,i_fax)=store_a(i_la_plt,i_ma_plt,i_fax)+1;
+                store_v(i_lv_plt,i_mv_plt,i_fvx)=store_v(i_lv_plt,i_mv_plt,i_fvx)+1;
+            end
+            %the storage containers above will contain the distribution of the
+            %visual and auditory probabilities, multiplied with the probability
+            %for L_{av}^{s} etc. (i.e. the integration terms).
+            mi=mi+1;
+        end
+        li=li+1;
+    end
+    P_av_given_LMf(:,:,:,t+1)=P_av_given_LMf(:,:,:,t)+(P_C*((store_a+store_v)./(sum(sum(sum(store_a)))+sum(sum(sum(store_v)))))); %normalised result of the integral, need to be multiplied with P(C) and the posterior of the previous time_step
+    P_av_given_LMf(:,:,:,t+1)=P_av_given_LMf(:,:,:,t+1)/(sum(sum(sum(P_av_given_LMf(:,:,:,t+1))))); %normalising
 end
-figure(3);
-scatter3(i_la_store(:,1),i_ma_store(:,1),f_a_s_store(:,1));
-hold on;
-scatter3(i_lv_store(:,1),i_mv_store(:,1),f_v_s_store(:,1));
-hold off;
-%% now that
-% [GC,GR] = groupcounts(i_la_store(:,1)); %this counts the amount of times a value shows up in a parameter, this can then be used to plot the distribution of said parameter
-
-%make the a_x and v_x parameters that will be used in the estimation
-[f_a_s_plt,f_v_s_plt,i_l_plt,i_m_plt,i_la_plt,i_ma_plt,i_lv_plt,i_mv_plt]=Likelihood(k,t_max,n,c,l,m,sig_e_s,sig_l_s,sig_m_s,sig_e_ax,sig_e_vx,sig_la,sig_ma,sig_lv,sig_mv);
