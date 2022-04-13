@@ -12,7 +12,9 @@ if nargin==17
     % C=1
     %the code below lets a person estimate a cue for three consecutive
     %timesteps. For all of these the location of the target remains the same.
-    
+    percept_L_denominator= (1/sig_la)+(1/sig_lv)+(1/sig_l_s);
+    percept_M_denominator= (1/sig_ma)+(1/sig_mv)+(1/sig_m_s);
+
     i_l_plt=zeros(t_max,1);
     i_m_plt=zeros(t_max,1);
     i_la_plt=zeros(t_max,1);
@@ -71,6 +73,13 @@ if nargin==17
         [~,d_f_vx]=dsearchn(f_v_x,(k*c)');
         i_fax=find(d_f_ax==min(d_f_ax(:)));
         i_fvx=find(d_f_vx==min(d_f_vx(:)));
+
+        percept_L_av=( (L_av_xa/sig_la) + (L_av_xv/sig_lv) + (L_av_s/sig_l_s) )/percept_L_denominator;
+        percept_M_av=( (M_av_xa/sig_ma) + (M_av_xv/sig_mv) + (M_av_s/sig_m_s) )/percept_M_denominator;
+        [~,d_percept_L_av]=dsearchn(percept_L_av,l');
+        [~,d_percept_M_av]=dsearchn(percept_M_av,m');
+        i_percept_L_av=find(d_percept_L_av==min(d_percept_L_av(:)));
+        i_percept_M_av=find(d_percept_M_av==min(d_percept_M_av(:)));
     end
     
     varargout{1}=i_fax;
@@ -82,6 +91,9 @@ if nargin==17
     varargout{6}=i_ma_plt;
     varargout{7}=i_lv_plt;
     varargout{8}=i_mv_plt;
+    varargout{9}=i_percept_L_av;
+    varargout{10}=i_percept_M_av;
+
 end
 if nargin==22
     sig_e_as=varargin{1};
