@@ -111,6 +111,11 @@ if nargin==22
     L_v=varargin{13};
     M_v=varargin{14};
     %C=2
+    percept_La_denominator= (1/sig_la)+(1/sig_l_as);
+    percept_Ma_denominator= (1/sig_ma)+(1/sig_m_as);
+    percept_Lv_denominator= (1/sig_lv)+(1/sig_l_vs);
+    percept_Mv_denominator= (1/sig_mv)+(1/sig_m_vs);
+
     i_lvs_plt=zeros(t_max,1);
     i_mvs_plt=zeros(t_max,1);
     i_las_plt=zeros(t_max,1);
@@ -157,15 +162,15 @@ if nargin==22
         f_a_s_plt(i)=f_a_s;
         f_v_s_plt(i)=f_v_s;    
 
-        L_av_xa=normrnd(L_a_s,sig_la);
-        L_av_xv=normrnd(L_v_s,sig_lv);
-        M_av_xa=normrnd(M_a_s,sig_ma);
-        M_av_xv=normrnd(M_v_s,sig_mv); %generating the meaning and location in the observation, based on a gaussian centered on the actual meaning/location and the above specified noise levels
+        L_a_xa=normrnd(L_a_s,sig_la);
+        L_v_xv=normrnd(L_v_s,sig_lv);
+        M_a_xa=normrnd(M_a_s,sig_ma);
+        M_v_xv=normrnd(M_v_s,sig_mv); %generating the meaning and location in the observation, based on a gaussian centered on the actual meaning/location and the above specified noise levels
     
-        [~,d_l_xa]=dsearchn(L_av_xa,l');
-        [~,d_m_xa]=dsearchn(M_av_xa,m');
-        [~,d_l_xv]=dsearchn(L_av_xv,l');
-        [~,d_m_xv]=dsearchn(M_av_xv,m'); %getting the distances from the observations to the possible locations/meanings, l and m
+        [~,d_l_xa]=dsearchn(L_a_xa,l');
+        [~,d_m_xa]=dsearchn(M_a_xa,m');
+        [~,d_l_xv]=dsearchn(L_v_xv,l');
+        [~,d_m_xv]=dsearchn(M_v_xv,m'); %getting the distances from the observations to the possible locations/meanings, l and m
         i_lax=find(d_l_xa==min(d_l_xa(:)));
         i_max=find(d_m_xa==min(d_m_xa(:)));
         i_lvx=find(d_l_xv==min(d_l_xv(:)));
@@ -183,6 +188,20 @@ if nargin==22
         [~,d_f_vx]=dsearchn(f_v_x,(k*c)');
         i_fax=find(d_f_ax==min(d_f_ax(:)));
         i_fvx=find(d_f_vx==min(d_f_vx(:)));
+
+        percept_L_a=( (L_a_xa/sig_la) + (L_a_s/sig_l_as) )/percept_La_denominator;
+        percept_M_a=( (M_a_xa/sig_ma) + (M_a_s/sig_m_as) )/percept_Ma_denominator;
+        [~,d_percept_L_a]=dsearchn(percept_L_a,l');
+        [~,d_percept_M_a]=dsearchn(percept_M_a,m');
+        i_percept_L_a=find(d_percept_L_a==min(d_percept_L_a(:)));
+        i_percept_M_a=find(d_percept_M_a==min(d_percept_M_a(:)));
+
+        percept_L_v=( (L_v_xv/sig_lv) + (L_v_s/sig_l_vs) )/percept_Lv_denominator;
+        percept_M_v=( (M_v_xv/sig_mv) + (M_v_s/sig_m_vs) )/percept_Mv_denominator;
+        [~,d_percept_L_v]=dsearchn(percept_L_v,l');
+        [~,d_percept_M_v]=dsearchn(percept_M_v,m');
+        i_percept_L_v=find(d_percept_L_v==min(d_percept_L_v(:)));
+        i_percept_M_v=find(d_percept_M_v==min(d_percept_M_v(:)));
     end
     
     %now the observation, denoted by x:
@@ -199,5 +218,9 @@ if nargin==22
     varargout{8}=i_ma_plt;
     varargout{9}=i_lv_plt;
     varargout{10}=i_mv_plt;
+    varargout{11}=i_percept_L_a;
+    varargout{12}=i_percept_M_a;
+    varargout{13}=i_percept_L_v;
+    varargout{14}=i_percept_M_v;
 end
 end
