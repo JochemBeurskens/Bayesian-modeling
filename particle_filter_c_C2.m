@@ -6,10 +6,11 @@
 % change over time of the envelope and facial movements made in speech
 % In the generative model this case represents the audio track for the case
 % of C=2
-
+clear all;
+clc;
 % rng(5); %set random seed
-t_max=100; %set number of time steps in the process
-n=10; %set the number of observations made for each time step, this becomes the amount of particles for each step
+t_max=20; %set number of time steps in the process
+n=50; %set the number of observations made for each time step, this becomes the amount of particles for each step
 
 c=1.0; %setting a parameter for the resampling, as this is done when N_eff<=c*n, setting c=1 means at every step, setting c=0 means you never resample
 %% the particle filter 
@@ -20,6 +21,7 @@ a_s=zeros(t_max,1); %to be estimated
 a_x=zeros(t_max,1); %noisy observations, want one observation for each time step
 phi_x=zeros(t_max,n); %the samples from the distribution will be stored in here, need N samples per time step
 w=zeros(t_max,n); %the weights of the different particles can be stored in here, one weight for each sample
+w_store=zeros(t_max,n); %to store the before reweighting estimates
 est=zeros(t_max,1); %the array to store the estimates in, these will be formed by the sum over the particles, weighted by their respective weight
 N_eff=zeros(t_max,1); %array to store the effective sample size
 U=zeros(t_max,n); %storing a parameter for deciding when to resample
@@ -42,6 +44,7 @@ w_b=(normcdf(a_x(1),x_comp(dsearchn(x_comp',phi_x(1,:)')),sig_e_ax)); %obtain th
 w_ab=(normcdf(a_x(1),x_comp(dsearchn(x_comp',phi_x(1,:)')+ones(size(phi_x(1,:),1))),sig_e_ax)); %obtain cdf for higher estimate
 w(1,:)=(w_b-w_ab)/(sum(w_b-w_ab)); %obtain weights and normalise, note for t=0 no multiplication with previous weights
 c_av_s=[normrnd(0,sig_e_s)]; %drawing c_av^s from the normal distribution
+w_store(1,:)=w(1,:);
 for i=2:t_max
     e_s=normrnd(0,sig_e_s);
     c_av_s=[c_av_s c_av_s(i-1)+e_s]; %storing and adding noise
@@ -56,7 +59,7 @@ for i=2:t_max
     w_b=(normcdf(a_x(i),x_comp(dsearchn(x_comp',phi_x(i,:)')),sig_e_ax)); %obtain the cdf for lower estimate
     w_ab=(normcdf(a_x(i),x_comp(dsearchn(x_comp',phi_x(i,:)')+ones(size(phi_x(i,:),1))),sig_e_ax)); %obtain cdf for higher estimate
     w(i,:)=((w_b-w_ab).*w(i-1,:))/(sum(((w_b-w_ab).*w(i-1,:)))); %obtain weights and normalise, note that now they have to be multiplied with the previous weigths
-    
+    w_store(i,:)=w(i,:);
     %now we can obtain the particle filter estimates
     est(i)=sum(phi_x(i,:).*w(i,:));
 
@@ -78,9 +81,19 @@ for i=2:t_max
 end
 
 %% plotting the trajectories
+figure(1)
 plot(a_s);
 hold on
 plot(a_x);
 % plot(phi_x);
 plot(est);
-legend("stimulus","percept","estimate");
+% legend("stimulus","percept","estimate");
+figure(1)
+area=(500*w_store(5,:))+0.1;
+scatter(5,phi_x(5,:),area)
+hold on
+area=(500*w_store(10,:))+0.1;
+scatter(10,phi_x(10,:),area)
+hold on
+area=(500*w_store(15,:))+0.1;
+scatter(15,phi_x(15,:),area)

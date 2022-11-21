@@ -5,8 +5,8 @@ function[varargout]=gen_model(k,t_max,n,l,varargin)
     % rng(5); % set random seed
 if nargin==12
     sig_l_s=varargin{1};
-    sig_lax=varargin{2};
-    sig_lvx=varargin{3};
+    sig_lvx=varargin{2};
+    sig_lax=varargin{3};
     sig_e_s=varargin{4};
     sig_e_ax=varargin{5};
     sig_e_vx=varargin{6};
