@@ -62,9 +62,9 @@ U=zeros(t_max,n); %storing a parameter for deciding when to resample
 L_s=c_av_s; %setting the actual stimulus locations
 
 L_xa(1)=normrnd(L_s(1),sig_lax); %creating the parameter that relates the noisy percept to the stimulus
-phi_xav(1,:,1)=normrnd(L_s(1),sig_lax,1,n);
+phi_xav(1,:,1)=normrnd(L_xa(1),sig_lax,1,n);
 L_xv(1)=normrnd(L_s(1),sig_lvx); %creating the parameter that relates the noisy percept to the stimulus
-phi_xav(1,:,2)=normrnd(L_s(1),sig_lvx,1,n);
+phi_xav(1,:,2)=normrnd(L_xv(1),sig_lvx,1,n);
 
 %now for the calculation of the weights we run into a small issue if we
 %keep this continuous, as then the P(y|phi) would be 0 for every y (as the
@@ -170,18 +170,18 @@ plot(L_xa);
 plot(L_xv);
 plot(estav(:,:,1));
 plot(estav(:,:,2));
-% legend("stimulus","percept a","percept v","estimate a","estimate v");
+legend("stimulus","percept a","percept v","estimate a","estimate v");
 
 % legend("stimulus v","percept v","estimate v");
-figure(1)
-area=(500*w_storeav(5,:,1)+0.1);
-scatter(5,phi_xav(5,:,1),area)
-hold on
-area=(500*w_storeav(10,:,1)+0.1);
-scatter(10,phi_xav(10,:,1),area)
-hold on
-area=(500*w_storeav(15,:,1)+0.1);
-scatter(15,phi_xav(15,:,1),area)
+% figure(1)
+% area=(500*w_storeav(5,:,1)+0.1);
+% scatter(5,phi_xav(5,:,1),area)
+% hold on
+% area=(500*w_storeav(10,:,1)+0.1);
+% scatter(10,phi_xav(10,:,1),area)
+% hold on
+% area=(500*w_storeav(15,:,1)+0.1);
+% scatter(15,phi_xav(15,:,1),area)
 % figure(2)
 % area=(500*w_storev(5,:))+0.1;
 % scatter(5,phi_xv(5,:),area)

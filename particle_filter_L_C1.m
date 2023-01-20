@@ -1,4 +1,4 @@
-function [] = particle_filter_L_C1(k,t_max,n,l,sig_l_s,sig_lvx,sig_lax,sig_e_s,sig_e_ax,sig_e_vx,p_c,p_h,L_av_s)
+function [estav] = particle_filter_L_C1(c,k,t_max,n,l,sig_l_s,sig_lvx,sig_lax,sig_e_s,sig_e_ax,sig_e_vx,p_c,p_h,L_xa,L_xv)
 % in this code I used the theory on a particle filter from the paper: 
 % "A tutorial on particle filters", by M. Speekenbrink
 % in this we track a latent states of a stochastic process, by calculating
@@ -7,8 +7,8 @@ function [] = particle_filter_L_C1(k,t_max,n,l,sig_l_s,sig_lvx,sig_lax,sig_e_s,s
 % change over time of the envelope and facial movements made in speech
 % In the generative model this case represents the audio track for the case
 % of C=1
-clear all;
-clc;
+% clear all;
+% clc;
 % rng(5); %set random seed
 % t_max=20; %set number of time steps in the process
 % n=50; %set the number of observations made for each time step, this becomes the amount of particles for each step
@@ -43,9 +43,9 @@ clc;
  
 %% the particle filter 
 %setting arrays to store the important parameters
-L_s=zeros(t_max,1); %to be estimated
-L_xa=zeros(t_max,1); %noisy observations, want one observation for each time step
-L_xv=zeros(t_max,1); %noisy observations, want one observation for each time step
+% L_s=zeros(t_max,1); %to be estimated
+% L_xa=zeros(t_max,1); %noisy observations, want one observation for each time step
+% L_xv=zeros(t_max,1); %noisy observations, want one observation for each time step
 phi_xav=zeros(t_max,n,2); %the samples from the distribution will be stored in here, need N samples per time step
 %phi_xv=zeros(t_max,n); %the samples from the distribution will be stored in here, need N samples per time step
 wa=zeros(t_max,n); %the weights of the different particles can be stored in here, one weight for each sample
@@ -60,12 +60,12 @@ N_eff=zeros(t_max,1); %array to store the effective sample size
 U=zeros(t_max,n); %storing a parameter for deciding when to resample
 
 %initialising the parameters
-L_s(:,1)=L_av_s*ones(1,t_max); %setting the actual stimulus locations
+% L_s(:,1)=L_av_s*ones(1,t_max); %setting the actual stimulus locations
 
-L_xa(1)=normrnd(L_s(1),sig_lax); %creating the parameter that relates the noisy percept to the stimulus
-phi_xav(1,:,1)=normrnd(L_s(1),sig_lax,1,n);
-L_xv(1)=normrnd(L_s(1),sig_lvx); %creating the parameter that relates the noisy percept to the stimulus
-phi_xav(1,:,2)=normrnd(L_s(1),sig_lvx,1,n);
+% L_xa(1)=normrnd(L_s(1),sig_lax); %creating the parameter that relates the noisy percept to the stimulus
+phi_xav(1,:,1)=normrnd(L_xa(1),sig_lax,1,n);
+% L_xv(1)=normrnd(L_s(1),sig_lvx); %creating the parameter that relates the noisy percept to the stimulus
+phi_xav(1,:,2)=normrnd(L_xv(1),sig_lvx,1,n);
 
 %now for the calculation of the weights we run into a small issue if we
 %keep this continuous, as then the P(y|phi) would be 0 for every y (as the
@@ -97,9 +97,9 @@ w_storeav(1,:)=wav(1,:);
 estav(1,1,1)=sum(phi_xav(1,:,1).*wav(1,:));
 estav(1,1,2)=sum(phi_xav(1,:,2).*wav(1,:));
 for i=2:t_max
-    L_xa(i)=normrnd(L_s(i-1),sig_lax); %creating the parameter that relates the noisy percept to the stimulus
+%     L_xa(i)=normrnd(L_s(i-1),sig_lax); %creating the parameter that relates the noisy percept to the stimulus
     phi_xav(i,:,1)=normrnd(phi_xav(i-1,:,1),sig_lax,1,n);
-    L_xv(i)=normrnd(L_s(i-1),sig_lvx); %creating the parameter that relates the noisy percept to the stimulus
+%     L_xv(i)=normrnd(L_s(i-1),sig_lvx); %creating the parameter that relates the noisy percept to the stimulus
     phi_xav(i,:,2)=normrnd(phi_xav(i-1,:,2),sig_lvx,1,n);
     
     %now for the calculation of the weights we run into a small issue if we
