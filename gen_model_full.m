@@ -127,7 +127,7 @@ if nargin==20
     varargout{10}=m_av_xv;   
     varargout{11}=m_s;
 end
-if nargin == 24
+if nargin == 22
     sig_l_vs=varargin{1};
     sig_l_as=varargin{2};
     sig_lvx=varargin{3};
@@ -191,7 +191,7 @@ if nargin == 24
         for i=1:t_max
             %making the observations, denoted by x:
             L_a_x=normrnd(L_a_s,sig_lax);
-            L_v_x=normrnd(L_av_s,sig_lvx);
+            L_v_x=normrnd(L_v_s,sig_lvx);
            
             [~,d_l_xa]=dsearchn(L_a_x,l');
             [~,d_l_xv]=dsearchn(L_v_x,l'); %getting the distances from the observations to the possible locations
@@ -207,20 +207,33 @@ if nargin == 24
         % meaning of the stimuli for the case of C=1
     
         for i=1:t_max
-            %making the observations, denoted by x:
-            m_a_x=normrnd(m_s,sig_m_ax);
-            m_v_x=normrnd(m_s,sig_m_vx);
-            if m_a_x >= p_c
-                m_a(i,o)=1;
-            elseif m_a_x < p_c
-                m_a(i,o)=2;
-            end
-            if m_v_x >= p_c
-                m_v(i,o)=1;
-            elseif m_v_x < p_c
-                m_v(i,o)=2;
-            end
+            m_a_x=normrnd(m_sa,sig_m_ax);
+            m_v_x=normrnd(m_sv,sig_m_vx);
+           
+            [~,d_m_xa]=dsearchn(m_a_x,m');
+            [~,d_m_xv]=dsearchn(m_v_x,m'); %getting the distances from the observations to the possible locations
+            
+            i_ma=find(d_m_xa==min(d_m_xa(:)));
+            i_mv=find(d_m_xv==min(d_m_xv(:))); %obtaining the index of the closest matching location
+            
+            m_a(i,o)=(i_ma); %these values represent the result of the delta function from the formulas
+            m_v(i,o)=(i_mv); %these values represent the result of the delta function from the formulas
+
+%             %making the observations, denoted by x:
+%             m_a_x=normrnd(m_s,sig_m_ax);
+%             m_v_x=normrnd(m_s,sig_m_vx);
+%             if m_a_x >= p_c
+%                 m_a(i,o)=1;
+%             elseif m_a_x < p_c
+%                 m_a(i,o)=2;
+%             end
+%             if m_v_x >= p_c
+%                 m_v(i,o)=1;
+%             elseif m_v_x < p_c
+%                 m_v(i,o)=2;
+%             end
         end
+
     
         % the random walk for the content for the case of C=1
         for p=1:n_r   
@@ -253,6 +266,7 @@ if nargin == 24
     varargout{10}=c_v_s;
     varargout{11}=m_a_x;
     varargout{12}=m_v_x;   
-    varargout{13}=m_s;
+    varargout{13}=m_sa;
+    varargout{14}=m_sv;
 end
 end

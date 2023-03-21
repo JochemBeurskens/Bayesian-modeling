@@ -8,32 +8,18 @@ n=10; %maybe not discritize, set the number of possible locations, the larger th
 m_n=10;
 n_r=1; %number of stes of a_x or v_x obtained for each set of L_s, M_s and c_s
 n_lm=1; %number of sets of L^x and M^x that are considered for the integrals
+n_c_s=10;
+
 c=0.8; %setting a parameter for the resampling, as this is done when N_eff<=c*n, setting c=1 means at every step, setting c=0 means you never resample
 k=1; %setting the multiplication for the linear functions
 l_r=40;
 lrange=[-l_r/2 l_r/2]; %the range of l, actual locations are between -10.5 and 10.5
 l=linspace(lrange(1),lrange(2),n);%lrange;%linspace(1,n,n); %setting the range of locations and meanings
+
 m_r=2;
 mrange=[-m_r m_r]; %the range of l, actual locations are between -10.5 and 10.5
 m=linspace(mrange(1),mrange(2),m_n); %setting the range of locations and meanings
 
-sig_l_s=1;
-sig_l_vs=1;
-sig_l_as=sig_l_vs; %when assuming that the original location is drawn from one normal distribution, only one sigma_L^s is needed, same for c. They can now be seperate draws though, which for C=1 was not possible
-sig_lax=10;
-sig_lvx=1;
-sig_e_s=1;
-sig_e_ax=1;
-sig_e_vx=1;
-sig_m_s=1;
-sig_m_as=1;
-sig_m_vs=sig_m_as;
-sig_m_ax=1;
-sig_m_vx=1;
-p_c=0.5; %if x param > p_c: m=1, else m=2
-p_h=1;
-
-n_c_s=10;
 diff_mean=3;
 mean_rw=10; %setting the mean of the random walk
 crange=[mean_rw-diff_mean mean_rw+diff_mean]; %the range of l, actual locations are between -10.5 and 10.5
@@ -42,8 +28,36 @@ if n_c_s == 1
 else
     c_l=linspace(crange(1),crange(2),n_c_s); %setting the range of locations and meanings
 end
+
+%variances for the caxe of C=1
+sig_l_s=1;
+sig_e_s=1;
+sig_m_s=1;
+
+%variances for the caxe of C=2
+sig_l_vs=1;
+sig_l_as=sig_l_vs; %when assuming that the original location is drawn from one normal distribution, only one sigma_L^s is needed, same for c. They can now be seperate draws though, which for C=1 was not possible
+sig_m_as=1;
+sig_m_vs=sig_m_as;
+sig_e_as=1;
+sig_e_vs=sig_e_as;
+
+%variances for the x variables
+sig_lax=10;
+sig_lvx=1;
+sig_e_ax=1;
+sig_e_vx=1;
+sig_m_ax=1;
+sig_m_vx=1;
+p_c=0.5; %if x param > p_c: m=1, else m=2
+p_h=1;
+
 %% obtaining the a_x, v_x values
+%C=1
 [i_la_plt,i_lv_plt,m_a,m_v,a_x,v_x,i_l,c_av_s,m_av_xa,m_av_xv,m_s]=gen_model_full(k,t_max,l,m,sig_l_s,sig_lvx,sig_lax,sig_m_s,sig_m_as,sig_m_vs,sig_m_ax,sig_m_vx,sig_e_s,sig_e_ax,sig_e_vx,p_c,p_h,n_r,n_lm,mean_rw);
+%C=2
+% [i_la_plt,i_lv_plt,m_a,m_v,a_x,v_x,i_la,i_lv,c_a_s,c_v_s,m_a_x,m_v_x,m_sa,m_sv]=gen_model_full(k,t_max,l,m,sig_l_vs,sig_l_as,sig_lvx,sig_lax,sig_m_s,sig_m_as,sig_m_vs,sig_m_ax,sig_m_vx,sig_e_as,sig_e_vs,sig_e_ax,sig_e_vx,p_c,p_h,n_r,n_lm,mean_rw);
+                                                                                                                                  
 % a_x=[   -1.9161   -0.1085    0.5103   -1.6292
 %     1.0938    0.0892    0.4049    0.9844
 %     0.9981   -1.4256    1.8917   -0.9620
@@ -96,12 +110,12 @@ end
 %     0.3652    2.1694    0.1697   -1.9544];
 % figure(1)
 % % surf
-% imagesc(a_x(:,1))
+% surf(a_x)
 % xlabel('Meaning'), ylabel('Location')%, zlabel('a^{x}')
 % figure(2)
 % surf(v_x)
 % xlabel('Meaning'), ylabel('Location'), zlabel('v^{x}')
-%% we look at one point only first
+%% we look at C=1 first
 prob_ax=zeros(n,m_n,n_c_s);%m_n);
 prob_vx=zeros(n,m_n,n_c_s);%m_n); %we have the dimensions l,m,t,L^{x},M^{x}
 prob_avx=zeros(n,m_n,n_c_s);%m_n); %we have the dimensions l,m,t,L^{x},M^{x}
@@ -157,6 +171,7 @@ for l_s_i=1:n
             prob_l_s=normpdf(L_s,0,sig_l_s);
             prob_m_s=normpdf(M_s,0,sig_m_s);
             post_ax(l_s_i,m_s_i,c_s_i)=prob_c_s*prob_l_s*prob_m_s*prob_ax(l_s_i,m_s_i,c_s_i);
+            post_vx(l_s_i,m_s_i,c_s_i)=prob_c_s*prob_l_s*prob_m_s*prob_vx(l_s_i,m_s_i,c_s_i);
             post_avx(l_s_i,m_s_i,c_s_i)=prob_c_s*prob_l_s*prob_m_s*prob_avx(l_s_i,m_s_i,c_s_i);
         end
     end
@@ -180,6 +195,97 @@ post_avx_plot=sum(post_avx,3);
 % for i=1:n
 %     ploti(i,:)=post_ax_ploti(:,i);
 % end
+%% we look at C=2 afterwards
+prob_ax_c2=zeros(n,m_n,n_c_s);%m_n);
+prob_vx_c2=zeros(n,m_n,n_c_s);%m_n); %we have the dimensions l,m,t,L^{x},M^{x}
+prob_avx_c2=zeros(n,m_n,n_c_s);%m_n); %we have the dimensions l,m,t,L^{x},M^{x}
+
+for l_s_i=1:n    
+    L_sa = l(l_s_i);
+    for m_s_i=1:m_n
+        M_sa = m(m_s_i);    
+        prob_ax_tc2=ones(n,m_n,1);
+%         prob_vx_t=ones(n,m_n,1);    
+%         prob_avx_t=ones(n,m_n,1);    
+        for c_s_i=1:n_c_s    
+             mean_vala=c_l(c_s_i);%c_s, a_x is observed so cannot loop over this, also should not as only integrate/take into account the c_s
+%     prob_c_s=abs(normcdf(c_l-((2*diff_mean)/n_c_s),mean_val,sig_e_s)-normcdf(c_l+((2*diff_mean)/n_c_s),mean_val,sig_e_s));   
+            for l_x_i=1:n
+                L_xa=l(l_x_i);
+                prob_Lax=abs(normcdf(L_xa-(l_r/n),L_sa,sig_lax)-normcdf(L_x+(l_r/n),L_sa,sig_lax));%
+                for m_x_i=1:m_n
+                    M_x=m(m_x_i);
+                    prob_Max=abs(normcdf(M_x-(m_r/m_n),M_s,sig_m_ax)-normcdf(M_x+(m_r/m_n),M_s,sig_m_ax));%      
+                    for l_i=1:n
+                        for m_i=1:m_n
+                            if l_x_i==l_i && m_x_i==m_i                                
+                                prob_ax_tc2(l_i,m_i)=(normpdf(a_x(l_i,m_i),mean_vala,sig_e_s));
+                            else
+                                prob_ax_tc2(l_i,m_i)=(normpdf(a_x(l_i,m_i),0,sig_e_s));   
+                            end
+                        end
+                    end                
+                    prob_ma(m_x_i)=prob_Max;
+                    prob_la(l_x_i)=prob_Lax;
+                    product_p_axc2(l_x_i,m_x_i,c_s_i)=prob_Max*prob_Lax*(prod(prod(prob_ax_tc2(:,:),2),1));
+                    %the above is thus calculated for each combination of
+                    %L^{x},M^{x},c^{s}
+                end
+            end 
+            prob_axc2(l_s_i,m_s_i,c_s_i)=sum(sum(product_p_axc2(:,:,c_s_i),2),1);    %prob_c_s(c_s_i)*
+            %the above is calculated for each combination of L^{s},M^{s},c^{s}   
+            prob_c_sa=normpdf(mean_vala,mean_rw,sig_e_s);
+            prob_l_sa=normpdf(L_sa,0,sig_l_s);
+            prob_m_sa=normpdf(M_sa,0,sig_m_s);
+            post_axc2(l_s_i,m_s_i,c_s_i)=prob_c_sa*prob_l_sa*prob_m_sa*prob_axc2(l_s_i,m_s_i,c_s_i);
+        end
+    end
+end
+
+for l_s_i=1:n    
+    L_sv = l(l_s_i);
+    for m_s_i=1:m_n
+        M_sv = m(m_s_i);    
+        prob_vx_tc2=ones(n,m_n,1);    
+%         prob_avx_t=ones(n,m_n,1);    
+        for c_s_i=1:n_c_s    
+             mean_valv=c_l(c_s_i);%c_s, a_x is observed so cannot loop over this, also should not as only integrate/take into account the c_s
+%     prob_c_s=abs(normcdf(c_l-((2*diff_mean)/n_c_s),mean_val,sig_e_s)-normcdf(c_l+((2*diff_mean)/n_c_s),mean_val,sig_e_s));   
+            for l_x_i=1:n
+                L_xv=l(l_x_i);
+                prob_Lvx=abs(normcdf(L_xv-(l_r/n),L_sv,sig_lax)-normcdf(L_xv+(l_r/n),L_sv,sig_lax));%
+                for m_x_i=1:m_n
+                    M_xv=m(m_x_i);
+                    prob_Mvx=abs(normcdf(M_xv-(m_r/m_n),M_sv,sig_m_vx)-normcdf(M_xv+(m_r/m_n),M_sv,sig_m_vx));%                                    
+                    for l_i=1:n
+                        for m_i=1:m_n
+                            if l_x_i==l_i && m_x_i==m_i                                
+                                prob_vx_tc2(l_i,m_i)=(normpdf(v_x(l_i,m_i),mean_valv,sig_e_s)); 
+                            else
+                                prob_vx_tc2(l_i,m_i)=(normpdf(v_x(l_i,m_i),0,sig_e_s));       
+                            end
+                        end
+%                         prob_avx_t(l_i,m_i)=prob_ax_t(l_ia,m_ia)*prob_vx_t(l_iv,m_iv);                                    
+                    end                
+                    prob_mv(m_x_i)=prob_Mvx;
+                    prob_lv(l_x_i)=prob_Lvx;   
+                    product_p_vxc2(l_x_i,m_x_i,c_s_i)=prob_Mvx*prob_Lvx*(prod(prod(prob_vx_tc2(:,:),2),1));
+                    %the above is thus calculated for each combination of
+                    %L^{x},M^{x},c^{s}
+                end
+            end 
+            prob_vxc2(l_s_i,m_s_i,c_s_i)=sum(sum(product_p_vxc2(:,:,c_s_i),2),1);      %prob_c_s(c_s_i)*  
+            %the above is calculated for each combination of L^{s},M^{s},c^{s}   
+            prob_c_sv=normpdf(mean_valv,mean_rw,sig_e_s);
+            prob_l_sv=normpdf(L_sv,0,sig_l_s);
+            prob_m_sv=normpdf(M_sv,0,sig_m_s);
+            post_vxc2(l_s_i,m_s_i,c_s_i)=prob_c_sv*prob_l_sv*prob_m_sv*prob_vxc2(l_s_i,m_s_i,c_s_i);
+        end
+    end
+end
+
+%% Then we can plot both
+
 if m_n==1 || n==1
     figure; plot(prob_ax_plot);%
     figure; plot(a_x);
